@@ -11,12 +11,30 @@ jobs:
       contents: write
       issues: write
       pull-requests: write
+      statuses: write
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
     steps:
       - id: release
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+      # The "release notes" ruleset requires the release-notes check, and ci's
+      # run on a release PR is held for approval, so without this the PR shows
+      # a check that waits forever. Say what it is waiting for instead.
+      - name: Mark a release PR with generated notes as blocked
+        continue-on-error: true # never keep the publish job from running
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sha=$(gh pr list --repo "$GITHUB_REPOSITORY" --label "autorelease: pending" --state open \
+            --json headRefOid -q '.[].headRefOid' | head -n 1)
+          [ -n "$sha" ] || exit 0
+          subject=$(gh api "repos/$GITHUB_REPOSITORY/commits/$sha" -q .commit.message | head -n 1)
+          case "$subject" in "docs(changelog): "*) exit 0 ;; esac
+          gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$sha" \
+            -f state=failure -f context=release-notes \
+            -f description="Notes are as generated: run /release" \
+            -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/main/RELEASING.md"
 
   publish:
     needs: release-please
