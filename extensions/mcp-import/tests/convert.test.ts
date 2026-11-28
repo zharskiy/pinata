@@ -235,6 +235,19 @@ describe("Codex entries", () => {
     expect(codex({ command: "x", args: [1] })).toEqual({ skip: "has args that are not a list of strings" });
   });
 
+  it("skips a server whose env sets a CODEX_ variable and keeps one with other names", () => {
+    expect(codex({ command: "node", env: { LOG_LEVEL: "1", CODEX_HOME: "/x" } })).toEqual({
+      skip: "is Codex's own helper: its env sets CODEX_HOME",
+    });
+    expect(codex({ command: "node", env: { LOG_LEVEL: "1", MY_CODEX_DIR: "/x" } })).toEqual({
+      server: { command: "node", env: { LOG_LEVEL: "1", MY_CODEX_DIR: "/x" } },
+      notes: [],
+    });
+    expect(claude({ command: "node", env: { CODEX_HOME: "/x" } })).toMatchObject({
+      server: { command: "node" },
+    });
+  });
+
   it("drops every other field, type included, with a note", () => {
     expect(
       codex({ type: "sse", url: "https://x.test/mcp", http_headers_helper: "h", startup_timeout_sec: 5 }),

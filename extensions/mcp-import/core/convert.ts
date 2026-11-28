@@ -410,7 +410,16 @@ const codexTools = (raw: RawServer, server: PiServer) => {
   }
 };
 
+const codexOwnVariable = (raw: RawServer) =>
+  Object.keys(Object(raw.env)).find((name) => name.startsWith("CODEX_"));
+
 const convertCodex = (raw: RawServer, notes: string[]): Conversion => {
+  const ownVariable = codexOwnVariable(raw);
+
+  if (ownVariable) {
+    return { skip: `is Codex's own helper: its env sets ${ownVariable}` };
+  }
+
   const picked = pick(codexShape(raw));
 
   if (typeof picked === "string") {
