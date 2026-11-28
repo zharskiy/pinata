@@ -1,15 +1,8 @@
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import type { Migrator } from "../../../common/mcp-migrate/index.ts";
 import type { Host } from "../../../platform/pi-adapter/index.ts";
 import type { Plugin, SettingsScope } from "../../../platform/shared/index.ts";
-import {
-  completeArgs,
-  type ImportArgs,
-  MISSING_SOURCE,
-  parseArgs,
-  type Source,
-  USAGE,
-} from "../core/args.ts";
+import { completeArgs, type ImportArgs, MISSING_SOURCE, parseArgs, USAGE } from "../core/args.ts";
 import { type Pair, prepareImport, selectedPlan, surveyImports, writeImport } from "../core/import-flow.ts";
 import { pickImport } from "../ui/pick.ts";
 import {
@@ -24,7 +17,7 @@ import {
   UNTRUSTED_ONLY,
 } from "../ui/report.ts";
 
-export const createMcpImport = (host: Host, home: string, codexHome: string) => {
+export const createMcpImport = (host: Host, home: string, env: NodeJS.ProcessEnv) => {
   const notify = (message: string) => {
     host.ui.notify(message, "info");
   };
@@ -36,10 +29,10 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
   const places = () => {
     const { cwd, agentDir } = host.session();
 
-    return { home, cwd, agentDir, codexHome };
+    return { home, cwd, agentDir, env };
   };
 
-  const prepare = (source: Source, scope: SettingsScope) => prepareImport(source, scope, places());
+  const prepare = (migrator: Migrator, scope: SettingsScope) => prepareImport(migrator, scope, places());
 
   const write = (pair: Pair, text: string | undefined) => {
     const problem = writeImport(pair, text, places());
@@ -60,7 +53,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
       return;
     }
 
-    const { found, pair, problem } = prepare(args.source, args.scope);
+    const { found, pair, problem } = prepare(args.migrator, args.scope);
 
     found.problems.forEach((message) => {
       fail(message, "warning");
@@ -89,7 +82,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
   };
 
   const apply = (picked: Pair, names: readonly string[]) => {
-    const fresh = prepare(picked.source, picked.scope);
+    const fresh = prepare(picked.migrator, picked.scope);
 
     if (fresh.problem) {
       fail(fresh.problem);
@@ -103,7 +96,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
       return;
     }
 
-    const { plan, problem } = selectedPlan(pair, names, home);
+    const { plan, problem } = selectedPlan(pair, names, places());
 
     if (problem) {
       fail(problem);
@@ -114,7 +107,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
       return;
     }
 
-    const args = { source: pair.source, scope: pair.scope, apply: true };
+    const args = { migrator: pair.migrator, scope: pair.scope, apply: true };
 
     notify(pickedReport({ args, plan, checked: pair.found.checked, target: pair.target }));
   };
@@ -185,6 +178,6 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
 export const mcpImportPlugin: Plugin<never, never, undefined> = {
   id: "mcp-import",
   enable({ host }) {
-    createMcpImport(host, homedir(), resolve(process.env.CODEX_HOME || join(homedir(), ".codex")));
+    createMcpImport(host, homedir(), process.env);
   },
 };

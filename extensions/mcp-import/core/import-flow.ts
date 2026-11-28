@@ -1,4 +1,12 @@
-import { sep } from "node:path";
+import {
+  type Found,
+  findServers,
+  MIGRATORS,
+  type Migrator,
+  type Plan,
+  planImport,
+  type Skipped,
+} from "../../../common/mcp-migrate/index.ts";
 import {
   errorText,
   homeRelative,
@@ -7,16 +15,13 @@ import {
   settingsPath,
   writeSettingsFile,
 } from "../../../platform/shared/index.ts";
-import type { Source } from "./args.ts";
-import { type Plan, planImport, type Skipped } from "./plan.ts";
-import { type Found, findServers } from "./sources.ts";
 
 export const MCP_FILE = "mcp.json";
 
 const NOT_SELECTED = "not selected";
 
 export type Pair = {
-  source: Source;
+  migrator: Migrator;
   scope: SettingsScope;
   found: Found;
   plan: Plan;
@@ -32,34 +37,25 @@ type Scan =
 
 type Prepared = { found: Found; pair?: Pair; problem?: string };
 
-type Places = { home: string; cwd: string; agentDir: string; codexHome: string };
+type Places = { home: string; cwd: string; agentDir: string; env: NodeJS.ProcessEnv };
 
-const PAIRS: readonly { source: Source; scope: SettingsScope }[] = [
-  { source: "claude", scope: "user" },
-  { source: "claude", scope: "project" },
-  { source: "cursor", scope: "user" },
-  { source: "cursor", scope: "project" },
-  { source: "codex", scope: "user" },
-  { source: "codex", scope: "project" },
-];
+const SCOPES = ["user", "project"] as const;
+
+const PAIRS = MIGRATORS.flatMap((migrator) => SCOPES.map((scope) => ({ migrator, scope })));
 
 const hasServers = (found: Found) => found.origins.some((origin) => Object.keys(origin.servers).length > 0);
 
 const fixFirst = (error: string) => `${error}; fix it first, nothing written`;
 
-export const prepareImport = (
-  source: Source,
-  scope: SettingsScope,
-  { home, cwd, agentDir, codexHome }: Places,
-): Prepared => {
-  const found = findServers(source, scope, { home, cwd, codexHome });
+export const prepareImport = (migrator: Migrator, scope: SettingsScope, places: Places): Prepared => {
+  const found = findServers(migrator, scope, places);
 
   if (!hasServers(found)) {
     return { found };
   }
 
-  const path = settingsPath({ agentDir, cwd }, scope, MCP_FILE);
-  const target = scope === "project" ? `.pi/${MCP_FILE}` : homeRelative(path, home);
+  const path = settingsPath(places, scope, MCP_FILE);
+  const target = scope === "project" ? `.pi/${MCP_FILE}` : homeRelative(path, places.home);
   let text: string | undefined;
 
   try {
@@ -68,13 +64,13 @@ export const prepareImport = (
     return { found, problem: `cannot read ${path}: ${errorText(error)}` };
   }
 
-  const plan = planImport(source, found.origins, { label: target, text }, { home, sep });
+  const plan = planImport(found.origins, { label: target, text }, places);
 
   if (plan.error) {
     return { found, problem: fixFirst(plan.error) };
   }
 
-  return { found, pair: { source, scope, found, plan, path, target, text } };
+  return { found, pair: { migrator, scope, found, plan, path, target, text } };
 };
 
 export const writeImport = (
@@ -95,13 +91,13 @@ export const writeImport = (
   }
 };
 
-export const selectedPlan = (pair: Pair, names: readonly string[], home: string) => {
+export const selectedPlan = (pair: Pair, names: readonly string[], places: Places) => {
   const chosen = new Set(names);
   const origins = pair.found.origins.map((origin) => ({
     ...origin,
     servers: Object.fromEntries(Object.entries(origin.servers).filter(([name]) => chosen.has(name))),
   }));
-  const plan = planImport(pair.source, origins, { label: pair.target, text: pair.text }, { home, sep });
+  const plan = planImport(origins, { label: pair.target, text: pair.text }, places);
   const unchecked = pair.plan.added
     .filter((entry) => !chosen.has(entry.name))
     .map((entry) => ({ name: entry.name, origin: entry.origin, reason: NOT_SELECTED }));
@@ -155,7 +151,7 @@ const scanPairs = (candidates: readonly Pair[], trusted: boolean): Scan => {
 };
 
 export const surveyImports = (places: Places, trusted: boolean) => {
-  const prepared = PAIRS.map(({ source, scope }) => ({ scope, ...prepareImport(source, scope, places) }));
+  const prepared = PAIRS.map(({ migrator, scope }) => ({ scope, ...prepareImport(migrator, scope, places) }));
   const visible = prepared.filter((item) => visibleScope(item.scope, trusted));
   const candidates = prepared.flatMap((item) => (item.pair ? [item.pair] : []));
 

@@ -10,6 +10,7 @@ const EXTENSIONS = join(ROOT, "extensions");
 const PLATFORM = join(ROOT, "platform");
 const LAYERS = ["pi-adapter", "shared", "ui-kit", "extension-manager"].map((name) => join(PLATFORM, name));
 const LAUNCHER = join(ROOT, "launcher");
+const COMMON = join(ROOT, "common");
 const LAUNCHER_ENTRY_FOLDERS = ["bin"];
 const LAUNCHER_BUILD = "dist";
 const LAUNCHER_ENTRY_TARGETS = [
@@ -47,7 +48,7 @@ const LAUNCHER_GRAPH: Record<string, string[]> = {
   ],
   bin: ["cli"],
 };
-const CODE_ROOTS = [...LAYERS, EXTENSIONS, TEST, LAUNCHER];
+const CODE_ROOTS = [...LAYERS, EXTENSIONS, TEST, LAUNCHER, COMMON];
 const EXTENSION_ENTRIES = [
   "index.ts",
   "api",
@@ -256,6 +257,31 @@ const testImportsOfOtherTestFolders = (file: string) => {
   });
 };
 
+const commonUnitOf = (path: string) => relative(COMMON, path).split(sep)[0] ?? "";
+
+const isCommonIndex = (target: string) =>
+  isInside(COMMON)(target) && target === join(COMMON, commonUnitOf(target), "index.ts");
+
+const DEPENDENCIES = Object.keys(
+  (JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as { dependencies: Record<string, string> })
+    .dependencies,
+);
+
+const isAllowedCommonSpecifier = (file: string) => (specifier: string) => {
+  if (specifier.startsWith("node:")) {
+    return true;
+  }
+
+  if (specifier.startsWith(".")) {
+    return isInside(join(COMMON, commonUnitOf(file)))(resolve(dirname(file), specifier));
+  }
+
+  return (
+    DEPENDENCIES.includes(specifier) ||
+    (specifier === "vitest" && relative(COMMON, file).split(sep).includes("tests"))
+  );
+};
+
 const manifestExtensions = () =>
   (JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as { pi: { extensions: string[] } }).pi
     .extensions;
@@ -350,6 +376,31 @@ describe("architecture", () => {
       allSpecifiersOf(file)
         .filter((specifier) => !isAllowedLauncherSpecifier(file)(specifier))
         .map((specifier) => `${relative(ROOT, file)} imports ${specifier}`),
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("keeps common/ to node built-ins, package dependencies and its own unit, vitest in its tests", () => {
+    const offenders = sourceFiles(COMMON).flatMap((file) =>
+      allSpecifiersOf(file)
+        .filter((specifier) => !isAllowedCommonSpecifier(file)(specifier))
+        .map((specifier) => `${relative(ROOT, file)} imports ${specifier}`),
+    );
+
+    expect(offenders).toEqual([]);
+  });
+
+  it("reaches a common/ unit from outside only through its index.ts", () => {
+    const offenders = allFiles().flatMap((file) =>
+      importsOf(file)
+        .filter(
+          (target) =>
+            isInside(COMMON)(target) &&
+            !isInside(join(COMMON, commonUnitOf(target)))(file) &&
+            !isCommonIndex(target),
+        )
+        .map((target) => `${relative(ROOT, file)} imports ${relative(ROOT, target)}`),
     );
 
     expect(offenders).toEqual([]);

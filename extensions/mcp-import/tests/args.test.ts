@@ -1,21 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { completeArgs, parseArgs } from "../core/args.ts";
+import { completeArgs, parseArgs, USAGE } from "../core/args.ts";
 
 describe("mcp-import arguments", () => {
   it("defaults to a user-scope dry run", () => {
-    expect(parseArgs("claude")).toEqual({ source: "claude", scope: "user", apply: false });
+    expect(parseArgs("claude")).toMatchObject({ migrator: { id: "claude" }, scope: "user", apply: false });
   });
 
   it("reads project and apply in any order", () => {
-    expect(parseArgs(" cursor apply  project ")).toEqual({ source: "cursor", scope: "project", apply: true });
+    expect(parseArgs(" cursor apply  project ")).toMatchObject({
+      migrator: { id: "cursor" },
+      scope: "project",
+      apply: true,
+    });
   });
 
   it("reads codex as a source", () => {
-    expect(parseArgs("codex project")).toEqual({ source: "codex", scope: "project", apply: false });
+    expect(parseArgs("codex project")).toMatchObject({
+      migrator: { id: "codex" },
+      scope: "project",
+      apply: false,
+    });
   });
 
   it("asks for the interactive choice without arguments", () => {
     expect(parseArgs("  ")).toEqual({ interactive: true });
+  });
+
+  it("names every tool in the usage", () => {
+    expect(USAGE).toBe("/mcp-import <claude|cursor|codex> [project] [apply]");
   });
 
   it("rejects an unknown tool and unknown words", () => {

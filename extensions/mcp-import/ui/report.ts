@@ -1,15 +1,14 @@
+import { type Entry, needsSignIn, type Plan, type Skipped } from "../../../common/mcp-migrate/index.ts";
 import { counted } from "../../../platform/shared/index.ts";
 import type { ImportArgs } from "../core/args.ts";
-import { needsSignIn } from "../core/convert.ts";
 import { MCP_FILE } from "../core/import-flow.ts";
-import type { Entry, Plan, Skipped } from "../core/plan.ts";
 
 type ReportInput = { args: ImportArgs; plan: Plan; checked: readonly string[]; target: string };
 
 const command = (args: ImportArgs, apply: boolean) =>
   [
     "/mcp-import",
-    args.source,
+    args.migrator.id,
     ...(args.scope === "project" ? ["project"] : []),
     ...(apply ? ["apply"] : []),
   ].join(" ");

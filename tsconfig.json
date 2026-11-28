@@ -12,5 +12,5 @@
     "types": ["node"],
     "lib": ["ES2023"]
   },
-  "include": ["launcher", "platform", "extensions", "test", "vitest.config.ts"]
+  "include": ["common", "launcher", "platform", "extensions", "test", "vitest.config.ts"]
 }

@@ -1,16 +1,8 @@
+import { type Entry, needsSignIn, type Plan } from "../../../common/mcp-migrate/index.ts";
 import type { Host } from "../../../platform/pi-adapter/index.ts";
 import { counted, DOT, ELLIPSIS, type SettingsScope } from "../../../platform/shared/index.ts";
 import { multiSelectForm, selectForm } from "../../../platform/ui-kit/index.ts";
-import type { Source } from "../core/args.ts";
-import { needsSignIn } from "../core/convert.ts";
 import type { Pair } from "../core/import-flow.ts";
-import type { Entry, Plan } from "../core/plan.ts";
-
-const SOURCE_NAMES: Record<Source, string> = {
-  claude: "Claude Code",
-  cursor: "Cursor",
-  codex: "Codex",
-};
 
 const SCOPE_NAMES: Record<SettingsScope, string> = { user: "user", project: "this project" };
 
@@ -24,8 +16,8 @@ const nameList = (names: readonly string[]) => {
   return `${shown.join(", ")}${rest}`;
 };
 
-const pairLabel = (pair: Pick<Pair, "source" | "scope">) =>
-  `${SOURCE_NAMES[pair.source]}${DOT}${SCOPE_NAMES[pair.scope]}`;
+const pairLabel = (pair: Pick<Pair, "migrator" | "scope">) =>
+  `${pair.migrator.name}${DOT}${SCOPE_NAMES[pair.scope]}`;
 
 const sourceOptions = (pairs: readonly Pair[]) =>
   pairs.map((pair) => {

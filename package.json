@@ -34,6 +34,7 @@
     "pinata": "launcher/bin/pinata.js"
   },
   "files": [
+    "common",
     "launcher",
     "!launcher/bin/pi-dev.js",
     "!launcher/bin/pinata-dev.js",

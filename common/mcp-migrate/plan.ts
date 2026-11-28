@@ -1,7 +1,6 @@
-import { errorText, isPlainObject } from "../../../platform/shared/index.ts";
-import type { Source } from "./args.ts";
-import { type ConvertContext, convertServer, type PiServer, validName } from "./convert.ts";
-import type { Origin } from "./sources.ts";
+import type { Migrator, Origin, PiServer, Places } from "./migrator.ts";
+import { isPlainObject } from "./server.ts";
+import { errorText } from "./text.ts";
 
 export type Entry = { name: string; origin: string; server: PiServer; notes: string[] };
 
@@ -12,6 +11,10 @@ type Target = { label: string; text?: string };
 export type Plan = { added: Entry[]; skipped: Skipped[]; text?: string; error?: string };
 
 type Parsed = { config: Record<string, unknown>; servers: Record<string, unknown>; indent: string };
+
+const SERVER_NAME = /^[A-Za-z0-9_-]+$/;
+
+const validName = (name: string) => SERVER_NAME.test(name);
 
 const namespace = (name: string) => name.replace(/-/g, "_");
 
@@ -44,14 +47,9 @@ const mergeText = (parsed: Parsed, entries: readonly Entry[]) => {
   return `${JSON.stringify({ ...parsed.config, mcpServers: servers }, null, parsed.indent)}\n`;
 };
 
-type Candidate = { name: string; origin: string; raw: unknown; note?: string };
+type Candidate = { name: string; origin: string; raw: unknown; note?: string; convert: Migrator["convert"] };
 
-export const planImport = (
-  source: Source,
-  origins: readonly Origin[],
-  target: Target,
-  context: ConvertContext,
-): Plan => {
+export const planImport = (origins: readonly Origin[], target: Target, places: Places): Plan => {
   const parsed = parseTarget(target);
 
   if (typeof parsed === "string") {
@@ -64,6 +62,7 @@ export const planImport = (
       origin: origin.label,
       raw,
       note: origin.note,
+      convert: origin.convert,
     })),
   );
 
@@ -102,7 +101,9 @@ export const planImport = (
       return skip(`pi treats it as the same server as "${twin.name}", imported above`);
     }
 
-    const converted = convertServer(source, candidate.raw, context);
+    const converted = isPlainObject(candidate.raw)
+      ? candidate.convert(candidate.raw, places)
+      : { skip: "is not an object" };
 
     if ("skip" in converted) {
       return skip(converted.skip);
@@ -117,3 +118,9 @@ export const planImport = (
 
   return plan.added.length > 0 ? { ...plan, text: mergeText(parsed, plan.added) } : plan;
 };
+
+export const needsSignIn = (server: PiServer) =>
+  typeof server.url === "string" &&
+  !Object.keys(isPlainObject(server.headers) ? server.headers : {}).some(
+    (key) => key.toLowerCase() === "authorization",
+  );
