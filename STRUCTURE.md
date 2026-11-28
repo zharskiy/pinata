@@ -47,7 +47,7 @@ pinata/
 - `biome.json`: format and lint, the import-cycle and unused-code rules, and the per-folder `noRestrictedImports` overrides that hold each layer to its imports (`launcher/**` may not import `platform/`, `extensions/` or `test/`; where pi packages may be referenced is checked by `test/architecture.test.ts`).
 - `knip.json`: unused exports, types, files and dependencies; entries are the 15 extension `index.ts` files, the evals, the MCP fixture server, `launcher/cli/main.ts` and `launcher/proxy/daemon.ts`.
 - `.github/workflows/ci.yml`: Node 22, `npm run check` and the pack contents check; no credentials, no live tests, no evals.
-- `.github/workflows/release.yml`, `release-please-config.json`, `.release-please-manifest.json`: on a push to `main`, release-please keeps the release PR open; merging it tags the release and publishes it to npm through trusted publishing ([RELEASING.md](RELEASING.md)). `CHANGELOG.md` is written by release-please.
+- `.github/workflows/release.yml`, `release-please-config.json`, `.release-please-manifest.json`: on a push to `main`, release-please keeps the release PR open; merging it tags the release and publishes it to npm through trusted publishing ([RELEASING.md](RELEASING.md)). `CHANGELOG.md` is written by release-please; the `release` skill (`.agents/skills/release/`, `/release` through `.claude/skills/release/`) rewrites the open release PR's entry for readers, merges that PR and watches the publish, and the `release-notes` job of `ci.yml` runs the skill's `scripts/check.sh` so that a release PR with generated notes cannot be merged.
 - `.gitignore`: `node_modules`, `.DS_Store`, `.claude`, `test/evals/.results`, `launcher/dist`.
 
 ## Published vs development-only
