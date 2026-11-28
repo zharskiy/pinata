@@ -1,9 +1,9 @@
-import { chmod, lstat, readFile, stat, symlink } from "node:fs/promises";
+import { chmod, lstat, mkdir, readFile, stat, symlink } from "node:fs/promises";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import type { VmInspect } from "../../../backend/index.ts";
 import { exists, tempDir, writeJson, writeText } from "../../support/temp-dir.ts";
-import { createPinata } from "./support.ts";
+import { createPinata, writePackages } from "./support.ts";
 
 const RUNNING: VmInspect = { state: "running", size: { cpus: 4, memoryGiB: 8, diskGiB: 60 }, shares: [] };
 
@@ -113,7 +113,7 @@ describe("pinata install's MCP import", () => {
     expect(await pinata.run("install", "--yes")).toBe(0);
     expect(await serversOf(pinata.mcpJson)).toEqual({ linear: LINEAR, docs: DOCS });
     expect(pinata.harness.stdout()).toContain(
-      `\n! cannot read ${claudeJson}: invalid JSON; its MCP servers were not imported\n`,
+      "\n! cannot read ~/.claude.json: invalid JSON; its MCP servers were not imported\n",
     );
     expect(pinata.harness.stdout()).not.toContain("secret-token");
   });
@@ -158,6 +158,86 @@ describe("pinata install's MCP import", () => {
     expect(await serversOf(join(pinata.harness.hostAgentDir, "mcp.json"))).toEqual({ docs: DOCS });
     expect(pinata.harness.stdout()).toContain(
       `ok Imported MCP servers docs from ${join(codexHome, "config.toml")} into ~/.pi/agent/mcp.json\n`,
+    );
+  });
+
+  it("prints neither a default value nor a control character from a source file", async () => {
+    const pinata = await setUp();
+
+    await writeJson(join(pinata.home, ".claude.json"), {
+      mcpServers: {
+        github: { url: "https://gh.test/mcp", headers: { T: `\${X:-secret-default}` }, "\x1b[2Jkey": 1 },
+      },
+    });
+
+    expect(await pinata.run("install", "--yes")).toBe(0);
+    expect(pinata.harness.stdout()).toContain("  github: dropped [2Jkey: pi has no such field\n");
+    expect(pinata.harness.stdout()).not.toContain("secret-default");
+    expect(pinata.harness.stdout()).not.toContain("\x1b");
+  });
+
+  it("warns and still installs when mcp.json is a directory", async () => {
+    const pinata = await setUp();
+
+    await mkdir(pinata.mcpJson, { recursive: true });
+
+    expect(await pinata.run("install", "--yes")).toBe(0);
+    expect(pinata.harness.stdout()).toContain(
+      "\n! ~/.pi/agent/mcp.json: cannot be read; no MCP servers imported\n",
+    );
+  });
+
+  it("warns and still installs when mcp.json cannot be written", async () => {
+    const pinata = await setUp();
+
+    await writePackages(pinata.harness.hostAgentDir, [pinata.packageDir]);
+
+    await chmod(pinata.harness.hostAgentDir, 0o555);
+
+    const code = await pinata.run("install", "--yes");
+
+    await chmod(pinata.harness.hostAgentDir, 0o755);
+
+    expect(code).toBe(0);
+    expect(pinata.harness.stdout()).toMatch(
+      /^! ~\/\.pi\/agent\/mcp\.json: cannot be written \(.*EACCES.*\); no MCP servers imported\n/,
+    );
+    expect(await exists(pinata.mcpJson)).toBe(false);
+  });
+
+  it("writes no mcp.json when install refuses", async () => {
+    const pinata = await setUp();
+
+    await writeText(pinata.shim, "#!/bin/sh\necho mine\n");
+
+    expect(await pinata.run("install", "--yes")).toBe(1);
+    expect(await exists(pinata.mcpJson)).toBe(false);
+  });
+
+  it("replaces a dangling mcp.json link with a regular file", async () => {
+    const pinata = await setUp();
+
+    await mkdir(pinata.harness.hostAgentDir, { recursive: true });
+
+    await symlink(join(pinata.harness.root, "missing.json"), pinata.mcpJson);
+
+    expect(await pinata.run("install", "--yes")).toBe(0);
+    expect((await lstat(pinata.mcpJson)).isFile()).toBe(true);
+    expect(await serversOf(pinata.mcpJson)).toEqual({ github: GITHUB, linear: LINEAR, docs: DOCS });
+  });
+
+  it("skips a CODEX_HOME a sandbox can write, with a warning", async () => {
+    const pinata = await setUp();
+    const codexHome = join(pinata.harness.repoRoot, "codex");
+
+    pinata.harness.deps.env.CODEX_HOME = codexHome;
+
+    await writeText(join(codexHome, "config.toml"), '[mcp_servers.docs]\ncommand = "docs"\n');
+
+    expect(await pinata.run("install", "--yes")).toBe(0);
+    expect(await serversOf(pinata.mcpJson)).toEqual({ github: GITHUB, linear: LINEAR });
+    expect(pinata.harness.stdout()).toContain(
+      `\n! ${join(codexHome, "config.toml")} is in a folder a sandbox can write; its MCP servers were not imported\n`,
     );
   });
 });
