@@ -47,7 +47,7 @@ pi -e ./pinata/extensions/<name>/index.ts          # one extension for a single 
 
 To run pi in the sandbox with them, install with `pinata` instead ([Install, update and uninstall](#install-update-and-uninstall)).
 
-The package installs its skills (`pinata-code-style`, the code style the [subagents](extensions/subagents/README.md) implementer writes by, which pi lists for the main session too) and fifteen extensions:
+The package installs two skills, `pinata` and `pinata-code-style` (the code style the [subagents](extensions/subagents/README.md) implementer writes by, which pi lists for the main session too), and fifteen extensions:
 
 **Agents and tools**
 
@@ -72,6 +72,8 @@ The package installs its skills (`pinata-code-style`, the code style the [subage
 - **[composer](extensions/composer/README.md)**: the input drawn between two full-width rules, with pi's `›` cursor as the prompt.
 - **[working-indicator](extensions/working-indicator/README.md)**: a rotating verb and the elapsed time next to pi's spinner (`Pondering · 12s`).
 - **[command-aliases](extensions/command-aliases/README.md)**: friendlier names for built-in commands: `/continue`, `/clear`, `/exit`.
+
+Ask pi how to use or configure any of them, or the sandbox: the `pinata` skill points it at these docs, and `/skill:pinata <question>` makes it look.
 
 Start pi and try:
 
