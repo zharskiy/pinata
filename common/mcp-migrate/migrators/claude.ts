@@ -92,8 +92,8 @@ const convertClaude = (raw: RawServer, notes: string[]): Conversion => {
   }
 
   mapStrings(picked, (field, value) =>
-    value.replace(DEFAULTED, (whole, name) => {
-      notes.push(`${field}: ${whole} became \${${name}}; pi has no defaults, so set ${name}`);
+    value.replace(DEFAULTED, (_, name) => {
+      notes.push(`${field}: \${${name}:-…} became \${${name}}; pi has no defaults, so set ${name}`);
       return `\${${name}}`;
     }),
   );

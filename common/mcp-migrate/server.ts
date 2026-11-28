@@ -24,7 +24,10 @@ const transportSkip = (type: unknown) => {
     return "uses the WebSocket transport, which pi does not support";
   }
 
-  return `has transport type ${JSON.stringify(type)}; pi supports only stdio, http and streamable-http`;
+  const named =
+    typeof type === "string" ? `transport type ${JSON.stringify(type)}` : "an unsupported transport type";
+
+  return `has ${named}; pi supports only stdio, http and streamable-http`;
 };
 
 export const pick = (raw: RawServer): PiServer | string => {

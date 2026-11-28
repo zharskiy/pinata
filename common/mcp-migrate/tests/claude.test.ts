@@ -107,6 +107,9 @@ describe("Claude Code entries", () => {
       skip: expect.stringMatching(/WebSocket/),
     });
     expect(convert({ type: "other", command: "x" })).toEqual({ skip: expect.stringMatching(/"other"/) });
+    expect(convert({ type: 7, command: "x" })).toEqual({
+      skip: "has an unsupported transport type; pi supports only stdio, http and streamable-http",
+    });
   });
 
   it("skips entries without command or url, or with malformed fields", () => {
@@ -117,13 +120,14 @@ describe("Claude Code entries", () => {
   it("drops a default from ${VAR:-default} with a note", () => {
     const result = convert({
       url: "https://x.test/mcp",
-      headers: { Authorization: "Bearer ${TOKEN:-none}" },
+      headers: { Authorization: "Bearer ${TOKEN:-secret-default}" },
     });
 
     expect(result).toEqual({
       server: { url: "https://x.test/mcp", headers: { Authorization: "Bearer ${TOKEN}" } },
-      notes: ["headers.Authorization: ${TOKEN:-none} became ${TOKEN}; pi has no defaults, so set TOKEN"],
+      notes: ["headers.Authorization: ${TOKEN:-…} became ${TOKEN}; pi has no defaults, so set TOKEN"],
     });
+    expect(JSON.stringify(result)).not.toContain("secret-default");
   });
 
   it("warns that pi does not expand variables outside env and headers", () => {
