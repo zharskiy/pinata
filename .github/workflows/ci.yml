@@ -27,3 +27,21 @@ jobs:
           npm pack --dry-run 2>&1 | tee pack.txt
           ! grep -E '/tests?/|test/framework/|test/evals/|\.snap|fixtures|\.eval\.ts' pack.txt
           test "$(grep -c 'extensions/[a-z-]*/index.ts' pack.txt)" = 15
+
+  # Required by the "release notes" ruleset on main: a release PR cannot be
+  # merged until the release skill has rewritten its notes. Every other
+  # PR passes without running the script.
+  release-notes:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Release PR carries rewritten notes
+        if: startsWith(github.head_ref, 'release-please--')
+        run: .agents/skills/release/scripts/check.sh "$PR" "$GITHUB_REPOSITORY"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
