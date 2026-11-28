@@ -133,6 +133,7 @@ Nothing here is discovered automatically. Each item is a check or a doc that nam
 | root `README.md` | the count word in the header line and in "The package installs … extensions:"; a bullet in the right Quick start group (Agents and tools, Session awareness, Look and feel), in the form `- **[<name>](extensions/<name>/README.md)**: <lowercase one-line pitch>.`, paraphrasing the extension's own pitch; a try row only if the new command is one of the three or four things a first-time user should try, since that table is a showcase, not a list |
 | root `ARCHITECTURE.md` | the count word in the first line and the `14` in the "Who enforces what" bullets; a link in the alphabetical "Extensions, each with its own architecture" list |
 | root `STRUCTURE.md` | the `14` in the tree line and in the `package.json` and `knip.json` bullets; a link in the alphabetical extensions list under Folders |
+| `skills/pinata/SKILL.md` | `<name>` in the `description` extension list, with a few words of what the user would ask about it (its command, its feature); `test/pinata-skill.test.ts` fails without the name |
 | `platform/extension-manager/ARCHITECTURE.md` | the count word of the extensions that pass one plugin (all but subagents) |
 
 Then `grep -rn "14\|[Ff]ourteen\|[Tt]hirteen" README.md ARCHITECTURE.md STRUCTURE.md platform/extension-manager/ARCHITECTURE.md test/architecture.test.ts .github/workflows/ci.yml` to confirm nothing was missed, because the architecture test and CI fail on the count and the docs silently go stale.
@@ -167,7 +168,7 @@ extensions/<name>: <one-line pitch>
 Host surface: <commands, hooks, ui calls used>
 Settings: pi-<name>.json (<keys>) | none
 Talks to others: <channels published/subscribed, entries> | none
-Registered: package.json, architecture test (14), ci.yml (14), README, ARCHITECTURE.md, STRUCTURE.md
+Registered: package.json, architecture test (14), ci.yml (14), README, ARCHITECTURE.md, STRUCTURE.md, skills/pinata/SKILL.md
 Docs: extensions/<name>/{README,ARCHITECTURE,STRUCTURE}.md
 Checks: check ✓, pack count ✓, pi -e ✓ | skipped (<why>)
 Branch: <name>, <n> commit

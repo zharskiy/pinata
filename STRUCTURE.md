@@ -10,11 +10,12 @@ pinata/
 │   ├── ui-kit/              theme-aware rendering components
 │   └── extension-manager/   createManagedExtension, plugins, bus, settings
 ├── extensions/<name>/   15 extensions: index.ts api/ core/ ui/ tests/ (prompts/ agents/)
-├── skills/              pinata-code-style/SKILL.md, the shipped skill the implementer agent is granted
+├── skills/              the shipped skills: pinata/SKILL.md (points pi at these docs), pinata-code-style/SKILL.md (granted to the implementer agent)
 ├── launcher/            the standalone `pinata` command and its `pi` link (the `pinata` bin): bin/ cli/ config/ workspace/ backend/ container/ image/ proxy/ grants/ hostpi/ provision/ shared/ examples/ schema/ tests/
 ├── test/
 │   ├── architecture.test.ts
 │   ├── docs-sync.test.ts
+│   ├── pinata-skill.test.ts
 │   ├── framework/           fakes, harnesses, pi/ (real pi), live/, eval-runs/
 │   └── evals/               prompt-quality evals, local only
 ├── future-plans/        research and specs, one folder per topic, each topic's status in future-plans/README.md
@@ -35,6 +36,7 @@ pinata/
 - [test/evals/](test/evals/README.md): `subagents/<subject>/` with `*-cases.ts` and `*.eval.ts`, shared helpers in `subagents/support/` and their tests in `subagents/tests/`; results go to the gitignored `test/evals/.results/`.
 - `test/architecture.test.ts`: the structure rules Biome cannot express.
 - `test/docs-sync.test.ts`: the rule that changes to extension code or to code under `launcher/` come with doc changes.
+- `test/pinata-skill.test.ts`: the `pinata` skill's description parses, names every extension, and its doc paths exist.
 
 ## Config files
 
@@ -52,5 +54,5 @@ pinata/
 
 ## Published vs development-only
 
-- Published (`files` in `package.json`): `launcher/` (with the built `launcher/dist/`, without `bin/pi-dev.js`, `bin/pinata-dev.js` and `tsconfig.build.json`), `platform/` (`pi-adapter/`, `extension-manager/`, `ui-kit/`, `shared/`), `skills/`, each extension's `index.ts`, `api/`, `core/`, `ui/`, `prompts/`, `README.md` and the subagents `agents/` (the shipped agent files, which name each agent's `model` and a `limit` of at most 200000; the implementer's differs from the other leads'), plus the root `README.md`, `LICENSE`, `ARCHITECTURE.md`, `STRUCTURE.md` and `AGENTS.md`; every `tests/` folder is excluded.
+- Published (`files` in `package.json`): `launcher/` (with the built `launcher/dist/`, without `bin/pi-dev.js`, `bin/pinata-dev.js` and `tsconfig.build.json`), `platform/` (`pi-adapter/`, `extension-manager/`, `ui-kit/`, `shared/`), `skills/`, each extension's `index.ts`, `api/`, `core/`, `ui/`, `prompts/`, `README.md`, `ARCHITECTURE.md` and `STRUCTURE.md` (the root `ARCHITECTURE.md` and `STRUCTURE.md` entries match in every shipped folder, so the `pinata` skill's links resolve in an install) and the subagents `agents/` (the shipped agent files, which name each agent's `model` and a `limit` of at most 200000; the implementer's differs from the other leads'), plus the root `README.md`, `LICENSE`, `ARCHITECTURE.md`, `STRUCTURE.md` and `AGENTS.md`; every `tests/` folder is excluded.
 - Development-only: `test/` (with `test/framework/` and `test/evals/`), every `tests/`, `future-plans/`, `.github/` and the config files.
