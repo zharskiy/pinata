@@ -33,7 +33,7 @@ jobs:
           case "$subject" in "docs(changelog): "*) exit 0 ;; esac
           gh api -X POST "repos/$GITHUB_REPOSITORY/statuses/$sha" \
             -f state=failure -f context=release-notes \
-            -f description="Notes are as generated: run /release" \
+            -f description="Notes are not generated: run /release" \
             -f target_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY/blob/main/RELEASING.md"
 
   publish:
