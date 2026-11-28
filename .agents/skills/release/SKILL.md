@@ -80,7 +80,7 @@ Write for someone who uses the project and has never seen its source. They scan 
 
 - The `## [X.Y.Z](…) (date)` line stays exactly as generated and stays the first line of the notes.
 - Sections in that order, with release-please's own headings, plus `### Performance Improvements` and `### Reverts` when the generated entry has them. A section without bullets is left out.
-- One bullet is one change as the user sees it, in one sentence, starting with a capital letter, without a full stop. Keep the bold scope: it tells the reader which extension or part is concerned. Put bullets of the same scope next to each other, the most important first.
+- One bullet is one change as the user sees it, in one sentence, starting with a capital letter, without a full stop. Keep it short enough to scan, around twenty words before the links: the entry tells the reader that something changed and where, and the docs carry every option, condition and edge case. A bullet that grew long by absorbing other lines says the outcome, not the sum of their details; when it holds two things a user would look for separately, it is two bullets. Keep the bold scope: it tells the reader which extension or part is concerned. Put bullets of the same scope next to each other, the most important first.
 - Each bullet keeps the commit links release-please generated, copied as they are. A bullet that merges several lines carries the links of all of them, except that a merge commit's link goes when its PR's own commits are already linked. No PR links are added.
 - A release with a clear theme, or one that asks the user to do something on upgrade, may open with one or two plain sentences directly under the version line. Most releases need none.
 
