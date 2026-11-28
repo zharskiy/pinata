@@ -8,6 +8,6 @@
     "allowImportingTsExtensions": true,
     "declaration": false
   },
-  "include": ["**/*.ts", "../common/**/*.ts"],
-  "exclude": ["tests", "dist", "../common/**/tests"]
+  "include": ["**/*.ts"],
+  "exclude": ["tests", "dist"]
 }
