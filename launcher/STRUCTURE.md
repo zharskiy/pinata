@@ -10,7 +10,7 @@ CONFIGURATION.md               every config key, the one config file, credential
 ARCHITECTURE.md                how it works, the files it writes
 STRUCTURE.md                   this file
 THREAT-MODEL.md                assets, trust boundaries, what each feature weakens, known gaps
-tsconfig.build.json            emits dist/ (gitignored) for the published bin
+tsconfig.build.json            emits dist/ (gitignored) for the published bin: dist/launcher/ and dist/common/
 examples/config.json           a sample config file for a team to start from
 schema/sandbox-config.schema.json  the config keys
 ```
@@ -18,9 +18,9 @@ schema/sandbox-config.schema.json  the config keys
 ## bin/
 
 ```
-bin/pi.js              the package bin: runs the built dist/
+bin/pi.js              the package bin: runs the built ../dist/launcher/cli/main.js
 bin/pi-dev.js          checkout entry: runs the .ts sources, not published
-bin/pinata.js                  the pinata bin: runs the built dist/
+bin/pinata.js                  the pinata bin: runs the built ../dist/launcher/cli/main.js
 bin/pinata-dev.js              checkout entry of pinata: runs the .ts sources, not published
 ```
 
@@ -309,7 +309,7 @@ shared/atomic-write.ts         atomic, create-only and random-hex file writes
 shared/file-lock.ts            the lock primitives with their once-only waiting callback and abort signal, the take-only-if-free form and the form that retries every 250 ms until a skip test holds
 shared/liveness.ts             the liveness rule: pid, boot time and process start
 shared/process-start.ts        a process's start time (ps on macOS, /proc on Linux), telling a failed tool from a process without one
-shared/paths.ts                host agent dir, pinata's folder <agent dir>/pinata/ (config.json, state/, with PINATA_STATE_DIR made absolute and real), `launcher/` root, path containment and the outermost of a path list
+shared/paths.ts                host agent dir, pinata's folder <agent dir>/pinata/ (config.json, state/, with PINATA_STATE_DIR made absolute and real), `launcher/` root and entries (compiled when the module ends in `.js`), path containment and the outermost of a path list
 shared/state-layout.ts         every path under the state dir, and the guest paths, trees and mount points inside the container
 shared/repo-state.ts           per-repository record files: repo.json with its mount root and the workspace root the launch mounted, forgetRepo
 shared/regular-file.ts         safe reads of regular files

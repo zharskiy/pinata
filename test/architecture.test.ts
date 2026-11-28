@@ -15,7 +15,7 @@ const LAUNCHER_ENTRY_FOLDERS = ["bin"];
 const LAUNCHER_BUILD = "dist";
 const LAUNCHER_ENTRY_TARGETS = [
   join(LAUNCHER, "cli", "main.ts"),
-  join(LAUNCHER, LAUNCHER_BUILD, "cli", "main.js"),
+  join(LAUNCHER, LAUNCHER_BUILD, "launcher", "cli", "main.js"),
 ];
 const LAUNCHER_TEST_PACKAGES = ["vitest"];
 const PI_PACKAGE_REFERENCE =

@@ -19,7 +19,7 @@ const home = "/home/dev";
 
 const sourceRoot = resolve(import.meta.dirname, "..", "..");
 
-const compiledModule = pathToFileURL("/opt/pkg/launcher/dist/shared/paths.js").href;
+const compiledModule = pathToFileURL("/opt/pkg/launcher/dist/launcher/shared/paths.js").href;
 
 describe("launcherPaths", () => {
   it("keeps the config and the state under pi's default agent dir", () => {
@@ -149,7 +149,9 @@ describe("launcherEntry", () => {
   });
 
   it("returns the compiled file under dist when running compiled", () => {
-    expect(launcherEntry("proxy/daemon.ts", compiledModule)).toBe("/opt/pkg/launcher/dist/proxy/daemon.js");
+    expect(launcherEntry("proxy/daemon.ts", compiledModule)).toBe(
+      "/opt/pkg/launcher/dist/launcher/proxy/daemon.js",
+    );
   });
 });
 

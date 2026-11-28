@@ -293,4 +293,4 @@ To run pi on the host again without removing pinata, run `pinata uninstall --san
 
 How it works and every file it writes: [ARCHITECTURE.md](ARCHITECTURE.md). Where the code is: [STRUCTURE.md](STRUCTURE.md).
 
-To work on pinata, run `npm run check` from the repository root. `node launcher/bin/pi-dev.js` runs a checkout. `PINATA_LIVE=1 npm run test:live` tests against real Colima.
+To work on pinata, run `npm run check` from the repository root. `node launcher/bin/pi-dev.js` runs a checkout. `npm run build:launcher` writes `launcher/dist/launcher/` and `launcher/dist/common/`; CI starts the compiled `pinata --version`. `PINATA_LIVE=1 npm run test:live` tests against real Colima.

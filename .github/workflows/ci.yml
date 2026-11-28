@@ -20,6 +20,8 @@ jobs:
       - run: npm run check
         env:
           DOCS_SYNC_BASE: ${{ github.event.pull_request.base.sha }}
+      - name: Compiled launcher starts
+        run: npm run build:launcher && node launcher/bin/pinata.js --version && test -f launcher/dist/launcher/proxy/daemon.js
       - name: Package contains no tests
         run: |
           npm pack --dry-run 2>&1 | tee pack.txt
