@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import type { Found, Migrator, Places, Scope, Servers } from "./migrator.ts";
 import { isPlainObject } from "./server.ts";
-import { errorText } from "./text.ts";
+import { errorText, parseJson } from "./text.ts";
 
 type Read = { data?: unknown; problem?: string };
 
@@ -31,7 +31,7 @@ export const mcpServers = (data: unknown): Servers | string => {
 
 export const findServers = (migrator: Migrator, scope: Scope, places: Places): Found => {
   const specs = migrator.files(scope, places);
-  const reads = specs.map((spec) => ({ spec, read: readConfig(spec.path, spec.parse ?? JSON.parse) }));
+  const reads = specs.map((spec) => ({ spec, read: readConfig(spec.path, spec.parse ?? parseJson) }));
 
   const parsed = reads
     .filter(({ read }) => read.data !== undefined)

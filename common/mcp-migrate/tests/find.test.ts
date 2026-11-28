@@ -42,7 +42,18 @@ describe("source files", () => {
     writeFileSync(join(home, ".cursor", "mcp.json"), "{");
 
     expect(findServers(cursor, "user", { home, cwd, env }).problems).toEqual([
-      expect.stringMatching(/^cannot read .*mcp\.json: /),
+      expect.stringMatching(/^cannot read .*mcp\.json: invalid JSON at line 1, column 2$/),
     ]);
+  });
+
+  it("names a JSON error without quoting the file", () => {
+    const { home, cwd, env } = places();
+
+    writeFileSync(join(home, ".cursor", "mcp.json"), '{"a": secret-token}');
+
+    const [problem] = findServers(cursor, "user", { home, cwd, env }).problems;
+
+    expect(problem).toMatch(/mcp\.json: invalid JSON$/);
+    expect(problem).not.toContain("secret-token");
   });
 });

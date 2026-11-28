@@ -1,6 +1,6 @@
 import type { Migrator, Origin, PiServer, Places } from "./migrator.ts";
 import { isPlainObject } from "./server.ts";
-import { errorText } from "./text.ts";
+import { errorText, parseJson } from "./text.ts";
 
 export type Entry = { name: string; origin: string; server: PiServer; notes: string[] };
 
@@ -26,7 +26,7 @@ const parseTarget = (target: Target): Parsed | string => {
   }
 
   try {
-    const config: unknown = JSON.parse(target.text);
+    const config: unknown = parseJson(target.text);
 
     if (!isPlainObject(config) || (config.mcpServers !== undefined && !isPlainObject(config.mcpServers))) {
       return `${target.label}: expected an object with an "mcpServers" object`;

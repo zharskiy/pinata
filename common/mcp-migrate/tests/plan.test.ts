@@ -109,6 +109,13 @@ describe("import plan", () => {
     expect(planImport([], target("{"), places).error).toMatch(/^mcp\.json: /);
     expect(planImport([], target('{"mcpServers":[]}'), places).error).toMatch(/"mcpServers" object/);
   });
+
+  it("reports an invalid target without quoting it", () => {
+    expect(planImport([], target("{\n  secret-token\n}"), places).error).toBe(
+      "mcp.json: invalid JSON at line 2, column 3",
+    );
+    expect(planImport([], target('{"a": secret-token}'), places).error).toBe("mcp.json: invalid JSON");
+  });
 });
 
 describe("sign-in hint", () => {
