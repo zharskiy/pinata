@@ -13,10 +13,10 @@ const COMMANDS: Array<[string, string]> = [
   ["pi update [target]", "update host pi, its packages or its model catalogs, with host pi on the host"],
   ["pi config", "the user resource config, with host pi on the host (-l passes through into the sandbox)"],
   [
-    "pinata install [--yes]",
-    "set up pinata's package in host pi, the pi link, PATH, the git settings and the sandbox VM; needs pi installed on the host, --yes asks nothing",
+    "pinata install [--yes] [--no-mcp-import]",
+    "set up pinata's package in host pi, the pi link, PATH, the git settings and the sandbox VM, and import the user-scope MCP servers of Claude Code, Cursor and Codex into pi's mcp.json; needs pi installed on the host, --yes asks nothing, --no-mcp-import skips the import",
   ],
-  ["pinata update", "install the latest pinata with npm, then its pinata install --yes"],
+  ["pinata update", "install the latest pinata with npm, then its pinata install --yes --no-mcp-import"],
   [
     "pinata uninstall [--sandbox]",
     "remove the sandbox VM, pinata's state, its links, its shell and git config blocks and its package in host pi; your config, sessions, pi and colima stay; --sandbox removes only the sandbox VM, the pi link and pinata's state, so pi runs host pi",

@@ -57,7 +57,7 @@ Start with a dry run, then write:
 - Cursor: `~/.cursor/mcp.json`. For a project, `<cwd>/.cursor/mcp.json`.
 - Codex: `config.toml` in `$CODEX_HOME` (`~/.codex` when unset). For a project, `<cwd>/.codex/config.toml`, the working directory only. Profiles and plugins are not read.
 
-The readers and converters live in `common/mcp-migrate/`, shared with pinata.
+The readers and converters live in `common/mcp-migrate/`, shared with pinata. `pinata install` imports the same user-scope servers into `~/.pi/agent/mcp.json`; `/mcp-import` adds project scope, Claude's local scope, the picker and the dry run.
 
 From Codex it converts `command`, `args`, `cwd`, `env`, `url`, `http_headers`, `env_http_headers` and `bearer_token_env_var` (as `Authorization: Bearer ${NAME}`), `enabled = false`, `tool_timeout_sec`, `enabled_tools` and `disabled_tools` (as `toolExposure`) and the OAuth `client_id`, `callback_port` and `scopes`. Codex leaves out an `env_http_headers` header while its variable is unset, but pi fails to connect, so set the variables. A `$` or leading `!` in an `env` or header value is escaped, since Codex reads them as literal text and pi does not. Every other field, `env_vars` and the OAuth client secret among them, is dropped with a note. A server whose `env` sets a variable starting with `CODEX_` is Codex's own helper and is skipped; to use one anyway, add it to `mcp.json` by hand.
 

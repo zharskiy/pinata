@@ -13,7 +13,7 @@ describe("pinata update", () => {
     expect(await pinata.run("update")).toBe(3);
     expect(pinata.lines().slice(-2)).toEqual([
       "npm install -g --legacy-peer-deps @zharskiy/pinata@latest",
-      `${process.execPath} ${bin} install --yes`,
+      `${process.execPath} ${bin} install --yes --no-mcp-import`,
     ]);
     expect(
       pinata.harness.calls

@@ -183,6 +183,11 @@ const piReferences = (files: Array<{ path: string; text: string }>) =>
     .filter((file) => !mayReferencePi(file.path) && PI_PACKAGE_REFERENCE.test(file.text))
     .map((file) => relative(ROOT, file.path));
 
+const commonUnitOf = (path: string) => relative(COMMON, path).split(sep)[0] ?? "";
+
+const isCommonIndex = (target: string) =>
+  isInside(COMMON)(target) && target === join(COMMON, commonUnitOf(target), "index.ts");
+
 const isAllowedLauncherSpecifier = (file: string) => (specifier: string) => {
   if (specifier.startsWith("node:")) {
     return true;
@@ -193,7 +198,9 @@ const isAllowedLauncherSpecifier = (file: string) => (specifier: string) => {
   }
 
   if (specifier.startsWith(".")) {
-    return isInside(LAUNCHER)(resolve(dirname(file), specifier));
+    const target = resolve(dirname(file), specifier);
+
+    return isInside(LAUNCHER)(target) || (!isLauncherTest(file) && isCommonIndex(target));
   }
 
   return isLauncherTest(file) && LAUNCHER_TEST_PACKAGES.includes(specifier);
@@ -226,6 +233,7 @@ const launcherEdges = () =>
     const from = launcherFolderOf(file);
 
     return importsOf(file)
+      .filter(isInside(LAUNCHER))
       .map(launcherFolderOf)
       .filter((to) => to !== from && to !== LAUNCHER_BUILD)
       .map((to) => ({ from, to }));
@@ -256,11 +264,6 @@ const testImportsOfOtherTestFolders = (file: string) => {
     );
   });
 };
-
-const commonUnitOf = (path: string) => relative(COMMON, path).split(sep)[0] ?? "";
-
-const isCommonIndex = (target: string) =>
-  isInside(COMMON)(target) && target === join(COMMON, commonUnitOf(target), "index.ts");
 
 const DEPENDENCIES = Object.keys(
   (JSON.parse(readFileSync(join(ROOT, "package.json"), "utf8")) as { dependencies: Record<string, string> })
@@ -371,7 +374,7 @@ describe("architecture", () => {
     expect(offenders).toEqual([]);
   });
 
-  it("keeps launcher/ standalone: node built-ins and launcher files only, vitest in its tests", () => {
+  it("keeps launcher/ standalone: node built-ins, launcher files and common/<name>/index.ts only, vitest in its tests", () => {
     const offenders = launcherFiles(LAUNCHER).flatMap((file) =>
       allSpecifiersOf(file)
         .filter((specifier) => !isAllowedLauncherSpecifier(file)(specifier))
@@ -459,6 +462,7 @@ describe("architecture", () => {
   it("lets a launcher folder, or a test folder other than its own, reach a launcher folder only through its index.ts, and bin/ only cli/main", () => {
     const offenders = launcherFiles(LAUNCHER).flatMap((file) =>
       importsOf(file)
+        .filter(isInside(LAUNCHER))
         .filter(isInnerLauncherImport(file))
         .map((target) => `${relative(ROOT, file)} imports ${relative(ROOT, target)}`),
     );

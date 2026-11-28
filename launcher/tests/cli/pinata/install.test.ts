@@ -325,6 +325,7 @@ describe("pinata install", () => {
   it.each([
     [["install", "extra"], 'pinata: install: unexpected argument "extra"'],
     [["install", "--force"], "pinata: install: Unknown option '--force'"],
+    [["install", "--mcp"], "pinata: install: Unknown option '--mcp'"],
     [["update", "1.0.0"], 'pinata: update: unexpected argument "1.0.0"'],
     [["update", "--yes"], "pinata: update: Unknown option '--yes'"],
     [["uninstall", "--yes"], 'pinata: unknown uninstall option "--yes"'],
