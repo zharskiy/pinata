@@ -3,7 +3,8 @@ import type { Migrator, Servers } from "../migrator.ts";
 import { claude } from "../migrators/claude.ts";
 import { codex } from "../migrators/codex.ts";
 import { cursor } from "../migrators/cursor.ts";
-import { needsSignIn, planImport } from "../plan.ts";
+import { planImport } from "../plan.ts";
+import { needsSignIn } from "../server.ts";
 
 const places = { home: "/home/me", cwd: "/work", env: {} };
 

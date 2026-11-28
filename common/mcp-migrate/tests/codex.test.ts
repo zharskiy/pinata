@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { findServers } from "../find.ts";
-import type { RawServer } from "../migrator.ts";
+import type { Server } from "../migrator.ts";
 import { claude } from "../migrators/claude.ts";
 import { codex } from "../migrators/codex.ts";
 import { useTempDirs } from "./temp.ts";
@@ -22,7 +22,7 @@ const places = () => {
 
 const fixed = { home: "/home/me", cwd: "/work", env: {} };
 
-const convert = (raw: RawServer) => codex.convert(raw, fixed);
+const convert = (raw: Server) => codex.convert(raw, fixed);
 
 describe("Codex files", () => {
   it("reads Codex's user file with quoted names, multi-line arrays and nested tables", () => {

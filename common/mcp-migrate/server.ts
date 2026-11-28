@@ -1,4 +1,4 @@
-import type { PiServer, RawServer } from "./migrator.ts";
+import type { Server } from "./migrator.ts";
 
 export const isPlainObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -30,12 +30,12 @@ const transportSkip = (type: unknown) => {
   return `has ${named}; pi supports only stdio, http and streamable-http`;
 };
 
-export const pick = (raw: RawServer): PiServer | string => {
+export const pick = (raw: Server): Server | string => {
   if (raw.type !== undefined && !PI_TYPES.includes(raw.type as string)) {
     return transportSkip(raw.type);
   }
 
-  const out: PiServer = {};
+  const out: Server = {};
 
   if (raw.type !== undefined) {
     out.type = raw.type;
@@ -84,7 +84,7 @@ export const pick = (raw: RawServer): PiServer | string => {
   return 'needs "command" (stdio) or "url" (streamable HTTP)';
 };
 
-export const mapStrings = (server: PiServer, map: (field: string, value: string) => string) => {
+export const mapStrings = (server: Server, map: (field: string, value: string) => string) => {
   LITERAL_FIELDS.filter((field) => typeof server[field] === "string").forEach((field) => {
     server[field] = map(field, server[field] as string);
   });
@@ -104,7 +104,7 @@ export const mapStrings = (server: PiServer, map: (field: string, value: string)
     });
 };
 
-export const strings = (server: PiServer): [string, string][] => [
+export const strings = (server: Server): [string, string][] => [
   ...LITERAL_FIELDS.filter((field) => typeof server[field] === "string").map((field): [string, string] => [
     field,
     server[field] as string,
@@ -120,7 +120,7 @@ export const strings = (server: PiServer): [string, string][] => [
   ),
 ];
 
-export const escapeCommands = (server: PiServer, notes: string[]) => {
+export const escapeCommands = (server: Server, notes: string[]) => {
   mapStrings(server, (field, value) => {
     if (!/^(env|headers)\./.test(field) || !value.startsWith("!")) {
       return value;
@@ -133,7 +133,7 @@ export const escapeCommands = (server: PiServer, notes: string[]) => {
   });
 };
 
-export const warnUnexpanded = (server: PiServer, notes: string[]) => {
+export const warnUnexpanded = (server: Server, notes: string[]) => {
   const fields = [
     ...new Set(
       strings(server)
@@ -149,10 +149,16 @@ export const warnUnexpanded = (server: PiServer, notes: string[]) => {
   }
 };
 
-export const dropUnknown = (raw: RawServer, known: string[], notes: string[], prefix = "") => {
+export const dropUnknown = (raw: Server, known: string[], notes: string[], prefix = "") => {
   const unknownKeys = Object.keys(raw).filter((key) => !known.includes(key));
 
   if (unknownKeys.length > 0) {
     notes.push(`dropped ${prefix}${unknownKeys.join(", ")}: pi has no such field`);
   }
 };
+
+export const needsSignIn = (server: Server) =>
+  typeof server.url === "string" &&
+  !Object.keys(isPlainObject(server.headers) ? server.headers : {}).some(
+    (key) => key.toLowerCase() === "authorization",
+  );

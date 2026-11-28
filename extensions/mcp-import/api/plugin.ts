@@ -1,5 +1,5 @@
 import { homedir } from "node:os";
-import type { Migrator } from "../../../common/mcp-migrate/index.ts";
+import { MIGRATORS, type Migrator } from "../../../common/mcp-migrate/index.ts";
 import type { Host } from "../../../platform/pi-adapter/index.ts";
 import type { Plugin, SettingsScope } from "../../../platform/shared/index.ts";
 import { completeArgs, type ImportArgs, MISSING_SOURCE, parseArgs, USAGE } from "../core/args.ts";
@@ -16,6 +16,8 @@ import {
   UNTRUSTED,
   UNTRUSTED_ONLY,
 } from "../ui/report.ts";
+
+const NAMES = MIGRATORS.map((migrator) => migrator.name);
 
 export const createMcpImport = (host: Host, home: string, env: NodeJS.ProcessEnv) => {
   const notify = (message: string) => {
@@ -150,7 +152,7 @@ export const createMcpImport = (host: Host, home: string, env: NodeJS.ProcessEnv
   };
 
   host.registerCommand("mcp-import", {
-    description: `Import MCP servers from Claude Code, Cursor or Codex into pi's mcp.json; without arguments pick the source and servers, with arguments a dry run unless you add apply: ${USAGE}`,
+    description: `Import MCP servers from ${NAMES.slice(0, -1).join(", ")} or ${NAMES.at(-1)} into pi's mcp.json; without arguments pick the source and servers, with arguments a dry run unless you add apply: ${USAGE}`,
     complete: completeArgs,
     run: async (text) => {
       const args = parseArgs(text);

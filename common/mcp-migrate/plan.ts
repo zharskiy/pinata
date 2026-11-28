@@ -1,8 +1,8 @@
-import type { Migrator, Origin, PiServer, Places } from "./migrator.ts";
+import type { Migrator, Origin, Places, Server } from "./migrator.ts";
 import { isPlainObject } from "./server.ts";
 import { errorText, parseJson } from "./text.ts";
 
-export type Entry = { name: string; origin: string; server: PiServer; notes: string[] };
+export type Entry = { name: string; origin: string; server: Server; notes: string[] };
 
 export type Skipped = { name: string; origin: string; reason: string; present?: true };
 
@@ -118,9 +118,3 @@ export const planImport = (origins: readonly Origin[], target: Target, places: P
 
   return plan.added.length > 0 ? { ...plan, text: mergeText(parsed, plan.added) } : plan;
 };
-
-export const needsSignIn = (server: PiServer) =>
-  typeof server.url === "string" &&
-  !Object.keys(isPlainObject(server.headers) ? server.headers : {}).some(
-    (key) => key.toLowerCase() === "authorization",
-  );

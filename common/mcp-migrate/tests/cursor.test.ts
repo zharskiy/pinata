@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { findServers } from "../find.ts";
-import type { RawServer } from "../migrator.ts";
+import type { Server } from "../migrator.ts";
 import { cursor } from "../migrators/cursor.ts";
 import { useTempDirs } from "./temp.ts";
 
@@ -21,7 +21,7 @@ const places = () => {
 
 const fixed = { home: "/home/me", cwd: "/work", env: {} };
 
-const convert = (raw: RawServer) => cursor.convert(raw, fixed);
+const convert = (raw: Server) => cursor.convert(raw, fixed);
 
 describe("Cursor files", () => {
   it("reads Cursor's user and project files", () => {

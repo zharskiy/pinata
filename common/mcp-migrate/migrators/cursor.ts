@@ -1,6 +1,6 @@
 import { join, sep } from "node:path";
 import { mcpServers } from "../find.ts";
-import type { ConfigFile, Conversion, Migrator, Places, RawServer, Scope } from "../migrator.ts";
+import type { ConfigFile, Conversion, Migrator, Places, Scope, Server } from "../migrator.ts";
 import { dropUnknown, escapeCommands, mapStrings, pick, strings, warnUnexpanded } from "../server.ts";
 
 const CURSOR_KEYS = ["type", "command", "args", "env", "cwd", "url", "headers", "envFile", "auth"];
@@ -19,7 +19,8 @@ const replaceHome = (field: string, value: string, home: string) => {
   return rest.split(HOME).join(home);
 };
 
-const convertCursor = (raw: RawServer, notes: string[], places: Places): Conversion => {
+const convertCursor = (raw: Server, places: Places): Conversion => {
+  const notes: string[] = [];
   const picked = pick(raw);
 
   if (typeof picked === "string") {
@@ -74,5 +75,5 @@ export const cursor: Migrator = {
   id: "cursor",
   name: "Cursor",
   files,
-  convert: (raw, places) => convertCursor(raw, [], places),
+  convert: convertCursor,
 };

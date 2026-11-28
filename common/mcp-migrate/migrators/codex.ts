@@ -1,6 +1,6 @@
 import { join, resolve } from "node:path";
 import { parse, TomlError } from "smol-toml";
-import type { ConfigFile, Conversion, Migrator, PiServer, Places, RawServer, Scope } from "../migrator.ts";
+import type { ConfigFile, Conversion, Migrator, Places, Scope, Server } from "../migrator.ts";
 import {
   dropUnknown,
   escapeCommands,
@@ -49,12 +49,12 @@ const codexServers = (data: unknown): Record<string, unknown> | string => {
   return isPlainObject(data.mcp_servers) ? data.mcp_servers : 'expected "mcp_servers" to be a table';
 };
 
-const codexShape = (raw: RawServer): RawServer =>
+const codexShape = (raw: Server): Server =>
   typeof raw.command === "string"
     ? { command: raw.command, args: raw.args, env: raw.env, cwd: raw.cwd }
     : { url: raw.url, headers: raw.http_headers };
 
-const keepDollars = (server: PiServer, notes: string[]) => {
+const keepDollars = (server: Server, notes: string[]) => {
   mapStrings(server, (field, value) => {
     if (!/^(env|headers)\./.test(field) || !value.includes("$")) {
       return value;
@@ -67,7 +67,7 @@ const keepDollars = (server: PiServer, notes: string[]) => {
   });
 };
 
-const codexHeaders = (raw: RawServer, server: PiServer, notes: string[]) => {
+const codexHeaders = (raw: Server, server: Server, notes: string[]) => {
   const fromEnv = isStringRecord(raw.env_http_headers)
     ? Object.fromEntries(Object.entries(raw.env_http_headers).map(([name, env]) => [name, `\${${env}}`]))
     : {};
@@ -88,7 +88,7 @@ const codexHeaders = (raw: RawServer, server: PiServer, notes: string[]) => {
   }
 };
 
-const codexOAuth = (raw: RawServer, server: PiServer, notes: string[]) => {
+const codexOAuth = (raw: Server, server: Server, notes: string[]) => {
   const oauth = isPlainObject(raw.oauth) ? raw.oauth : {};
   const fields = {
     clientId: typeof oauth.client_id === "string" ? oauth.client_id : undefined,
@@ -104,7 +104,7 @@ const codexOAuth = (raw: RawServer, server: PiServer, notes: string[]) => {
   dropUnknown(oauth, ["client_id", "callback_port"], notes, "oauth ");
 };
 
-const codexTools = (raw: RawServer, server: PiServer) => {
+const codexTools = (raw: Server, server: Server) => {
   const enabled = isStringArray(raw.enabled_tools)
     ? [["*", "hidden"], ...raw.enabled_tools.map((tool) => [tool, "codemode"])]
     : [];
@@ -118,10 +118,11 @@ const codexTools = (raw: RawServer, server: PiServer) => {
   }
 };
 
-const codexOwnVariable = (raw: RawServer) =>
+const codexOwnVariable = (raw: Server) =>
   Object.keys(Object(raw.env)).find((name) => name.startsWith("CODEX_"));
 
-const convertCodex = (raw: RawServer, notes: string[]): Conversion => {
+const convertCodex = (raw: Server): Conversion => {
+  const notes: string[] = [];
   const ownVariable = codexOwnVariable(raw);
 
   if (ownVariable) {
@@ -179,4 +180,4 @@ const files = (scope: Scope, { home, cwd, env }: Places): ConfigFile[] => {
   ];
 };
 
-export const codex: Migrator = { id: "codex", name: "Codex", files, convert: (raw) => convertCodex(raw, []) };
+export const codex: Migrator = { id: "codex", name: "Codex", files, convert: convertCodex };

@@ -7,4 +7,5 @@ export const MIGRATORS: readonly Migrator[] = [claude, cursor, codex];
 
 export { findServers } from "./find.ts";
 export type { Found, Migrator } from "./migrator.ts";
-export { type Entry, needsSignIn, type Plan, planImport, type Skipped } from "./plan.ts";
+export { type Entry, type Plan, planImport, type Skipped } from "./plan.ts";
+export { needsSignIn } from "./server.ts";

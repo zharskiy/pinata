@@ -1,7 +1,7 @@
 import { realpathSync } from "node:fs";
 import { join } from "node:path";
 import { mcpServers } from "../find.ts";
-import type { ConfigFile, Conversion, Migrator, PiServer, Places, RawServer, Scope } from "../migrator.ts";
+import type { ConfigFile, Conversion, Migrator, Places, Scope, Server } from "../migrator.ts";
 import { dropUnknown, escapeCommands, isPlainObject, mapStrings, pick, warnUnexpanded } from "../server.ts";
 
 const CLAUDE_KEYS = [
@@ -26,7 +26,7 @@ const AUTHORIZATION_FROM_JSON =
 
 const helperCommand = (helper: string) => `!(${helper}) | ${AUTHORIZATION_FROM_JSON}`;
 
-const convertTimeout = (raw: RawServer, server: PiServer, notes: string[]) => {
+const convertTimeout = (raw: Server, server: Server, notes: string[]) => {
   if (raw.timeout === undefined) {
     return;
   }
@@ -40,7 +40,7 @@ const convertTimeout = (raw: RawServer, server: PiServer, notes: string[]) => {
   notes.push(`timeout ${raw.timeout} ms became ${server.timeout} s`);
 };
 
-const convertOAuth = (raw: RawServer, server: PiServer, notes: string[]) => {
+const convertOAuth = (raw: Server, server: Server, notes: string[]) => {
   if (raw.oauth === undefined) {
     return;
   }
@@ -65,7 +65,7 @@ const convertOAuth = (raw: RawServer, server: PiServer, notes: string[]) => {
   }
 };
 
-const convertHelper = (raw: RawServer, server: PiServer, notes: string[]) => {
+const convertHelper = (raw: Server, server: Server, notes: string[]) => {
   if (raw.headersHelper === undefined) {
     return;
   }
@@ -84,7 +84,8 @@ const convertHelper = (raw: RawServer, server: PiServer, notes: string[]) => {
   );
 };
 
-const convertClaude = (raw: RawServer, notes: string[]): Conversion => {
+const convertClaude = (raw: Server): Conversion => {
+  const notes: string[] = [];
   const picked = pick(raw);
 
   if (typeof picked === "string") {
@@ -152,5 +153,5 @@ export const claude: Migrator = {
   id: "claude",
   name: "Claude Code",
   files,
-  convert: (raw) => convertClaude(raw, []),
+  convert: convertClaude,
 };

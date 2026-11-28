@@ -2,7 +2,7 @@ import { mkdirSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { findServers } from "../find.ts";
-import type { RawServer } from "../migrator.ts";
+import type { Server } from "../migrator.ts";
 import { claude } from "../migrators/claude.ts";
 import { useTempDirs } from "./temp.ts";
 
@@ -21,7 +21,7 @@ const places = () => {
 
 const fixed = { home: "/home/me", cwd: "/work", env: {} };
 
-const convert = (raw: RawServer) => claude.convert(raw, fixed);
+const convert = (raw: Server) => claude.convert(raw, fixed);
 
 describe("Claude Code files", () => {
   it("reads Claude's local scope under the real path of a symlinked project", () => {
