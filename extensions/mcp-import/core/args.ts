@@ -1,16 +1,13 @@
+import { MIGRATORS, type Migrator } from "../../../common/mcp-migrate/index.ts";
 import type { SettingsScope } from "../../../platform/shared/index.ts";
 
-const SOURCES = ["claude", "cursor", "codex"] as const;
+const IDS = MIGRATORS.map((migrator) => migrator.id);
 
-export type Source = (typeof SOURCES)[number];
-
-export type ImportArgs = { source: Source; scope: SettingsScope; apply: boolean };
+export type ImportArgs = { migrator: Migrator; scope: SettingsScope; apply: boolean };
 
 const FLAGS = ["project", "apply"];
 
-export const USAGE = "/mcp-import <claude|cursor|codex> [project] [apply]";
-
-const isSource = (word: string): word is Source => (SOURCES as readonly string[]).includes(word);
+export const USAGE = `/mcp-import <${IDS.join("|")}> [project] [apply]`;
 
 export const MISSING_SOURCE = `name the tool to import from; usage: ${USAGE}`;
 
@@ -21,8 +18,10 @@ export const parseArgs = (text: string): ImportArgs | { error: string } | { inte
     return { interactive: true };
   }
 
-  if (!isSource(first)) {
-    return { error: `unknown tool "${first}" (available: ${SOURCES.join(", ")}); usage: ${USAGE}` };
+  const migrator = MIGRATORS.find((each) => each.id === first);
+
+  if (!migrator) {
+    return { error: `unknown tool "${first}" (available: ${IDS.join(", ")}); usage: ${USAGE}` };
   }
 
   const unknownWords = rest.filter((word) => !FLAGS.includes(word));
@@ -34,7 +33,7 @@ export const parseArgs = (text: string): ImportArgs | { error: string } | { inte
   }
 
   return {
-    source: first,
+    migrator,
     scope: rest.includes("project") ? "project" : "user",
     apply: rest.includes("apply"),
   };
@@ -44,7 +43,7 @@ export const completeArgs = (prefix: string) => {
   const words = prefix.trimStart().split(/\s+/);
   const last = words.pop() ?? "";
   const head = words.length > 0 ? `${words.join(" ")} ` : "";
-  const options: string[] = words.length === 0 ? [...SOURCES] : FLAGS.filter((flag) => !words.includes(flag));
+  const options: string[] = words.length === 0 ? [...IDS] : FLAGS.filter((flag) => !words.includes(flag));
   const matches = options.filter((option) => option.startsWith(last));
 
   return matches.length > 0 ? matches.map((option) => ({ value: `${head}${option}`, label: option })) : null;

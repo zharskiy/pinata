@@ -1,17 +1,27 @@
 import { describe, expect, it } from "vitest";
-import { planImport } from "../core/plan.ts";
+import type { Migrator, Servers } from "../migrator.ts";
+import { claude } from "../migrators/claude.ts";
+import { codex } from "../migrators/codex.ts";
+import { cursor } from "../migrators/cursor.ts";
+import { planImport } from "../plan.ts";
+import { needsSignIn } from "../server.ts";
 
-const context = { home: "/home/me", sep: "/" };
+const places = { home: "/home/me", cwd: "/work", env: {} };
+
+const origin = (label: string, servers: Servers, migrator: Migrator = claude) => ({
+  label,
+  servers,
+  convert: migrator.convert,
+});
 
 const target = (text?: string) => ({ label: "mcp.json", text });
 
 describe("import plan", () => {
   it("adds converted servers and keeps the rest of the file", () => {
     const plan = planImport(
-      "claude",
-      [{ label: ".mcp.json", servers: { docs: { type: "http", url: "https://x.test/mcp" } } }],
+      [origin(".mcp.json", { docs: { type: "http", url: "https://x.test/mcp" } })],
       target('{\n    "autoEnableCodemode": false,\n    "mcpServers": { "old": { "command": "old" } }\n}\n'),
-      context,
+      places,
     );
 
     expect(plan.added.map((entry) => entry.name)).toEqual(["docs"]);
@@ -23,22 +33,16 @@ describe("import plan", () => {
   });
 
   it("creates the file content when there is none", () => {
-    const plan = planImport(
-      "cursor",
-      [{ label: "a", servers: { one: { command: "x" } } }],
-      target(),
-      context,
-    );
+    const plan = planImport([origin("a", { one: { command: "x" } }, cursor)], target(), places);
 
     expect(plan.text).toBe('{\n  "mcpServers": {\n    "one": {\n      "command": "x"\n    }\n  }\n}\n');
   });
 
   it("never overwrites an existing server, also when names differ only in - and _", () => {
     const plan = planImport(
-      "claude",
-      [{ label: "a", servers: { same: { command: "new" }, "my-tool": { command: "new" } } }],
+      [origin("a", { same: { command: "new" }, "my-tool": { command: "new" } })],
       target('{"mcpServers":{"same":{"command":"old"},"my_tool":{"command":"old"}}}'),
-      context,
+      places,
     );
 
     expect(plan.added).toEqual([]);
@@ -56,13 +60,9 @@ describe("import plan", () => {
 
   it("lets the first source win for a name defined twice", () => {
     const plan = planImport(
-      "claude",
-      [
-        { label: "local", servers: { x: { command: "local" } } },
-        { label: "project", servers: { x: { command: "project" } } },
-      ],
+      [origin("local", { x: { command: "local" } }), origin("project", { x: { command: "project" } })],
       target(),
-      context,
+      places,
     );
 
     expect(plan.added).toMatchObject([{ name: "x", origin: "local", server: { command: "local" } }]);
@@ -73,27 +73,27 @@ describe("import plan", () => {
 
   it("skips invalid names and unsupported entries", () => {
     const plan = planImport(
-      "claude",
-      [
-        {
-          label: "a",
-          servers: { "bad name": { command: "x" }, old: { type: "sse", url: "https://x.test/sse" } },
-        },
-      ],
+      [origin("a", { "bad name": { command: "x" }, old: { type: "sse", url: "https://x.test/sse" } })],
       target(),
-      context,
+      places,
     );
 
     expect(plan.added).toEqual([]);
     expect(plan.skipped.map((skip) => skip.name)).toEqual(["bad name", "old"]);
   });
 
+  it("skips a server entry that is not an object", () => {
+    const plan = planImport([origin("a", { x: "x" })], target(), places);
+
+    expect(plan.added).toEqual([]);
+    expect(plan.skipped).toEqual([{ name: "x", origin: "a", reason: "is not an object" }]);
+  });
+
   it("skips a Codex name pi cannot use next to one it adds", () => {
     const plan = planImport(
-      "codex",
-      [{ label: "~/.codex/config.toml", servers: { "a.b": { command: "x" }, ok: { command: "y" } } }],
+      [origin("~/.codex/config.toml", { "a.b": { command: "x" }, ok: { command: "y" } }, codex)],
       target(),
-      context,
+      places,
     );
 
     expect(plan.added.map((entry) => entry.name)).toEqual(["ok"]);
@@ -107,9 +107,22 @@ describe("import plan", () => {
   });
 
   it("refuses a target file that is not a valid mcp.json", () => {
-    expect(planImport("claude", [], target("{"), context).error).toMatch(/^mcp\.json: /);
-    expect(planImport("claude", [], target('{"mcpServers":[]}'), context).error).toMatch(
-      /"mcpServers" object/,
+    expect(planImport([], target("{"), places).error).toMatch(/^mcp\.json: /);
+    expect(planImport([], target('{"mcpServers":[]}'), places).error).toMatch(/"mcpServers" object/);
+  });
+
+  it("reports an invalid target without quoting it", () => {
+    expect(planImport([], target("{\n  secret-token\n}"), places).error).toBe(
+      "mcp.json: invalid JSON at line 2, column 3",
     );
+    expect(planImport([], target('{"a": secret-token}'), places).error).toBe("mcp.json: invalid JSON");
+  });
+});
+
+describe("sign-in hint", () => {
+  it("flags HTTP servers without an Authorization header", () => {
+    expect(needsSignIn({ url: "https://x.test/mcp" })).toBe(true);
+    expect(needsSignIn({ url: "https://x.test/mcp", headers: { authorization: "x" } })).toBe(false);
+    expect(needsSignIn({ command: "srv" })).toBe(false);
   });
 });

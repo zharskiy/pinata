@@ -14,6 +14,7 @@ export default defineConfig({
         test: {
           name: "unit",
           include: [
+            "common/*/tests/**/*.test.ts",
             "launcher/tests/**/*.test.ts",
             "platform/*/tests/**/*.test.ts",
             "extensions/*/tests/**/*.test.ts",

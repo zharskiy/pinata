@@ -25,7 +25,7 @@ export const update = async (deps: CliDeps, packageDir: string) => {
 
   return deps.runner.spawnInteractive(
     process.execPath,
-    [join(packageDir, "launcher", "bin", "pinata.js"), "install", "--yes"],
+    [join(packageDir, "launcher", "bin", "pinata.js"), "install", "--yes", "--no-mcp-import"],
     { cwd: deps.cwd },
   );
 };

@@ -75,7 +75,7 @@ const setup = ({
 
   const host = createFakeHost({ agentDir, cwd, projectTrusted, mode });
 
-  createMcpImport(host, home, codexDir);
+  createMcpImport(host, home, codexHome ? { CODEX_HOME: codexHome } : {});
   host.start();
 
   return { host, userFile: join(agentDir, "mcp.json"), projectFile: join(cwd, ".pi", "mcp.json") };

@@ -1,15 +1,8 @@
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { MIGRATORS, type Migrator } from "../../../common/mcp-migrate/index.ts";
 import type { Host } from "../../../platform/pi-adapter/index.ts";
 import type { Plugin, SettingsScope } from "../../../platform/shared/index.ts";
-import {
-  completeArgs,
-  type ImportArgs,
-  MISSING_SOURCE,
-  parseArgs,
-  type Source,
-  USAGE,
-} from "../core/args.ts";
+import { completeArgs, type ImportArgs, MISSING_SOURCE, parseArgs, USAGE } from "../core/args.ts";
 import { type Pair, prepareImport, selectedPlan, surveyImports, writeImport } from "../core/import-flow.ts";
 import { pickImport } from "../ui/pick.ts";
 import {
@@ -24,7 +17,9 @@ import {
   UNTRUSTED_ONLY,
 } from "../ui/report.ts";
 
-export const createMcpImport = (host: Host, home: string, codexHome: string) => {
+const NAMES = MIGRATORS.map((migrator) => migrator.name);
+
+export const createMcpImport = (host: Host, home: string, env: NodeJS.ProcessEnv) => {
   const notify = (message: string) => {
     host.ui.notify(message, "info");
   };
@@ -36,10 +31,10 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
   const places = () => {
     const { cwd, agentDir } = host.session();
 
-    return { home, cwd, agentDir, codexHome };
+    return { home, cwd, agentDir, env };
   };
 
-  const prepare = (source: Source, scope: SettingsScope) => prepareImport(source, scope, places());
+  const prepare = (migrator: Migrator, scope: SettingsScope) => prepareImport(migrator, scope, places());
 
   const write = (pair: Pair, text: string | undefined) => {
     const problem = writeImport(pair, text, places());
@@ -60,7 +55,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
       return;
     }
 
-    const { found, pair, problem } = prepare(args.source, args.scope);
+    const { found, pair, problem } = prepare(args.migrator, args.scope);
 
     found.problems.forEach((message) => {
       fail(message, "warning");
@@ -89,7 +84,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
   };
 
   const apply = (picked: Pair, names: readonly string[]) => {
-    const fresh = prepare(picked.source, picked.scope);
+    const fresh = prepare(picked.migrator, picked.scope);
 
     if (fresh.problem) {
       fail(fresh.problem);
@@ -103,7 +98,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
       return;
     }
 
-    const { plan, problem } = selectedPlan(pair, names, home);
+    const { plan, problem } = selectedPlan(pair, names, places());
 
     if (problem) {
       fail(problem);
@@ -114,7 +109,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
       return;
     }
 
-    const args = { source: pair.source, scope: pair.scope, apply: true };
+    const args = { migrator: pair.migrator, scope: pair.scope, apply: true };
 
     notify(pickedReport({ args, plan, checked: pair.found.checked, target: pair.target }));
   };
@@ -157,7 +152,7 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
   };
 
   host.registerCommand("mcp-import", {
-    description: `Import MCP servers from Claude Code, Cursor or Codex into pi's mcp.json; without arguments pick the source and servers, with arguments a dry run unless you add apply: ${USAGE}`,
+    description: `Import MCP servers from ${NAMES.slice(0, -1).join(", ")} or ${NAMES.at(-1)} into pi's mcp.json; without arguments pick the source and servers, with arguments a dry run unless you add apply: ${USAGE}`,
     complete: completeArgs,
     run: async (text) => {
       const args = parseArgs(text);
@@ -185,6 +180,6 @@ export const createMcpImport = (host: Host, home: string, codexHome: string) => 
 export const mcpImportPlugin: Plugin<never, never, undefined> = {
   id: "mcp-import",
   enable({ host }) {
-    createMcpImport(host, homedir(), resolve(process.env.CODEX_HOME || join(homedir(), ".codex")));
+    createMcpImport(host, homedir(), process.env);
   },
 };

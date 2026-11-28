@@ -10,7 +10,7 @@ CONFIGURATION.md               every config key, the one config file, credential
 ARCHITECTURE.md                how it works, the files it writes
 STRUCTURE.md                   this file
 THREAT-MODEL.md                assets, trust boundaries, what each feature weakens, known gaps
-tsconfig.build.json            emits dist/ (gitignored) for the published bin
+tsconfig.build.json            emits dist/ (gitignored) for the published bin: dist/launcher/ and dist/common/
 examples/config.json           a sample config file for a team to start from
 schema/sandbox-config.schema.json  the config keys
 ```
@@ -18,9 +18,9 @@ schema/sandbox-config.schema.json  the config keys
 ## bin/
 
 ```
-bin/pi.js              the package bin: runs the built dist/
+bin/pi.js              the package bin: runs the built ../dist/launcher/cli/main.js
 bin/pi-dev.js          checkout entry: runs the .ts sources, not published
-bin/pinata.js                  the pinata bin: runs the built dist/
+bin/pinata.js                  the pinata bin: runs the built ../dist/launcher/cli/main.js
 bin/pinata-dev.js              checkout entry of pinata: runs the .ts sources, not published
 ```
 
@@ -90,10 +90,11 @@ cli/commands/doctor-tls.ts     the tls inspection checks: the node handshake to 
 cli/commands/tls-probe.ts      the typed TLS handshake script those checks run as their own node process: request on stdin, chain and verdicts on stdout
 cli/commands/help.ts           the command table, printed whole for help and every --help, and the usage the error hints quote
 cli/commands/options.ts        the option check of the sandbox commands and egress
-cli/pinata/run.ts              pinata: the one command table, install, update and uninstall and the sandbox commands, with their flags
+cli/pinata/run.ts              pinata: the one command table, install (--yes, --no-mcp-import), update and uninstall and the sandbox commands, with their flags
 cli/pinata/host.ts             the package name, the preflight (root, Node, colima installed with brew when missing), host pi run captured, the busy refusal, the checkout or npm-copy check and the package sources in pi's settings.json
-cli/pinata/install.ts          pinata install: host pi requirement, pi install of the package, the link, the shell blocks, the git block, the open-file limit, then pinata init, and the closing block (installed, or nothing changed)
-cli/pinata/update.ts           pinata update: checkout refusal, host pi requirement, preflight, npm install -g of the package, then the new copy's pinata install --yes
+cli/pinata/install.ts          pinata install: host pi requirement, pi install of the package, the MCP import, the link, the shell blocks, the git block, the open-file limit, then pinata init, and the closing block (installed, or nothing changed)
+cli/pinata/update.ts           pinata update: checkout refusal, host pi requirement, preflight, npm install -g of the package, then the new copy's pinata install --yes --no-mcp-import
+cli/pinata/import-mcp.ts       importMcpServers: the user-scope MCP import of pinata install (common/mcp-migrate) without sources a sandbox can write, its ✔ line, notes and warnings, the atomic write of <agent dir>/mcp.json
 cli/pinata/uninstall.ts        pinata uninstall: busy refusal, releaseSandbox (each folder released, then under the ground and launch registry locks a second session count, the proxy stopped and the teardown it is given, silent unless a folder's session started meanwhile), removeSandbox (releaseSandbox with the colima profile deleted under its locks and the VM lock, shared with restart), the link, pi remove (a warning instead without a host pi), the shell blocks, the git block, the kern.maxfiles boot job, the guarded state dir, npm uninstall -g, the closing block of what was kept; --sandbox skips the pinata link, pi remove, the shell and git blocks, the boot job and npm uninstall -g
 cli/pinata/shim.ts             ~/.local/bin/pi: what may be replaced, the link, the recorded managed link and its restore; ~/.local/bin/pinata of a checkout, pinata's only when it points at launcher/bin/pinata-dev.js
 cli/pinata/path-block.ts       setBlock, the marked block writer (latin1 file, UTF-8 body, appended or put first after a byte-order mark, cut byte for byte, markers with or without a carriage return, written through a link by a temp file renamed over its target); the shell block in ~/.zshrc, ~/.bashrc and ~/.bash_profile: the PATH line and GIT_OPTIONAL_LOCKS=0
@@ -309,7 +310,7 @@ shared/atomic-write.ts         atomic, create-only and random-hex file writes
 shared/file-lock.ts            the lock primitives with their once-only waiting callback and abort signal, the take-only-if-free form and the form that retries every 250 ms until a skip test holds
 shared/liveness.ts             the liveness rule: pid, boot time and process start
 shared/process-start.ts        a process's start time (ps on macOS, /proc on Linux), telling a failed tool from a process without one
-shared/paths.ts                host agent dir, pinata's folder <agent dir>/pinata/ (config.json, state/, with PINATA_STATE_DIR made absolute and real), `launcher/` root, path containment and the outermost of a path list
+shared/paths.ts                host agent dir, pinata's folder <agent dir>/pinata/ (config.json, state/, with PINATA_STATE_DIR made absolute and real), `launcher/` root and entries (compiled when the module ends in `.js`), path containment and the outermost of a path list
 shared/state-layout.ts         every path under the state dir, and the guest paths, trees and mount points inside the container
 shared/repo-state.ts           per-repository record files: repo.json with its mount root and the workspace root the launch mounted, forgetRepo
 shared/regular-file.ts         safe reads of regular files
@@ -489,6 +490,7 @@ tests/cli/steps.test.ts              the step lines: off and at a terminal, NO_C
 tests/cli/list.test.ts               pinata list
 tests/cli/pinata/support.ts          a pinata run over the CLI harness: npm prefix, package folder, host pi install and remove writing settings.json, the captured colima delete and global npm, and a fake Mac's kern.maxfiles and boot job behind sudo
 tests/cli/pinata/install.test.ts     pinata install
+tests/cli/pinata/import-mcp.test.ts  pinata install's MCP import: every app, reruns, existing servers, --no-mcp-import, bad and unwritable files, refusals, modes, links, CODEX_HOME, sandbox-writable sources, printed text
 tests/cli/pinata/git-settings.test.ts  the git block: which global file, byte-order mark, CRLF markers, links, unwritable files, and git reading it
 tests/cli/pinata/update.test.ts      pinata update
 tests/cli/pinata/uninstall.test.ts   pinata uninstall

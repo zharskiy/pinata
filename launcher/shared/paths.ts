@@ -107,15 +107,15 @@ export const realOrResolvedSync = (path: string) => {
 
 const moduleFolder = (moduleUrl: string) => dirname(dirname(fileURLToPath(moduleUrl)));
 
-const isCompiled = (moduleUrl = import.meta.url) => basename(moduleFolder(moduleUrl)) === BUILD_DIR;
+const isCompiled = (moduleUrl = import.meta.url) => moduleUrl.endsWith(".js");
 
 export const launcherRoot = (moduleUrl = import.meta.url) => {
   const folder = moduleFolder(moduleUrl);
 
-  return isCompiled(moduleUrl) ? dirname(folder) : folder;
+  return isCompiled(moduleUrl) ? dirname(dirname(folder)) : folder;
 };
 
 export const launcherEntry = (relativeTsPath: string, moduleUrl = import.meta.url) =>
   isCompiled(moduleUrl)
-    ? join(launcherRoot(moduleUrl), BUILD_DIR, relativeTsPath.replace(/\.ts$/, ".js"))
+    ? join(launcherRoot(moduleUrl), BUILD_DIR, "launcher", relativeTsPath.replace(/\.ts$/, ".js"))
     : join(launcherRoot(moduleUrl), relativeTsPath);

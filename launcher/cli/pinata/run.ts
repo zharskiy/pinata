@@ -28,7 +28,7 @@ const HELP_FLAGS = ["-h", "--help"];
 
 const SANDBOX_FLAG = "--sandbox";
 
-const INSTALL_OPTIONS = { yes: { type: "boolean" } } as const;
+const INSTALL_OPTIONS = { yes: { type: "boolean" }, "no-mcp-import": { type: "boolean" } } as const;
 
 const parseOptions = <T extends Record<string, { type: "string" | "boolean" }>>(
   command: string,

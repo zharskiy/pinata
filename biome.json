@@ -41,7 +41,7 @@
   },
   "overrides": [
     {
-      "includes": ["extensions/mcp-import/tests/**"],
+      "includes": ["extensions/mcp-import/tests/**", "common/*/tests/**"],
       "linter": {
         "rules": {
           "suspicious": {
@@ -1129,6 +1129,38 @@
       }
     },
     {
+      "includes": ["common/**"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/platform/**"],
+                    "message": "common/ is pi-free and imports no platform/ layer."
+                  },
+                  {
+                    "group": ["**/extensions/**"],
+                    "message": "common/ never imports extensions/."
+                  },
+                  {
+                    "group": ["**/launcher/**"],
+                    "message": "common/ never imports launcher/."
+                  },
+                  {
+                    "group": ["**/test/**", "**/evals/**"],
+                    "message": "common/ never imports test/."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["launcher/**"],
       "linter": {
         "rules": {
@@ -1153,6 +1185,10 @@
                   {
                     "group": ["**/test/**", "**/evals/**"],
                     "message": "launcher/ never imports test/."
+                  },
+                  {
+                    "group": ["**/common/**", "!**/common/*/index.ts"],
+                    "message": "launcher/ imports common/ only through common/<name>/index.ts."
                   }
                 ]
               }

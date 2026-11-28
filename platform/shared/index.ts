@@ -32,7 +32,7 @@ export {
   type UsageReport,
 } from "./channels/host-channels.ts";
 export { HINT_STATUS_PREFIX, MIRROR_STATUS_PREFIX } from "./channels/status-keys.ts";
-export { isFiniteNumber, isPlainObject, isStringArray } from "./guards.ts";
+export { isFiniteNumber, isPlainObject } from "./guards.ts";
 export {
   HANDOFF_REQUEST_TYPE,
   HANDOFF_SEED_TYPE,

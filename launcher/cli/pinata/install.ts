@@ -9,12 +9,14 @@ import { type Steps, stepsOf, tilde } from "../steps.ts";
 import { launcherVersion } from "../versions.ts";
 import { setGitBlock } from "./git-block.ts";
 import { hostPiQuietly, isCheckout, PACKAGE, piSources, preflight, refuseBusy } from "./host.ts";
+import { importMcpServers } from "./import-mcp.ts";
 import { raiseMaxFiles } from "./open-files.ts";
 import { setPathBlock } from "./path-block.ts";
 import { inspectPinataLink, inspectShim, installPinataLink, installShim, removePinataLink } from "./shim.ts";
 
 export interface InstallFlags {
   yes?: boolean;
+  "no-mcp-import"?: boolean;
 }
 
 const EXTENSIONS = {
@@ -84,6 +86,10 @@ export const install = async (deps: CliDeps, packageDir: string, flags: InstallF
   }
 
   await ensureExtensions(deps, steps, checkout ? packageDir : `npm:${PACKAGE}@${await launcherVersion()}`);
+
+  if (flags["no-mcp-import"] !== true) {
+    await importMcpServers(deps, steps);
+  }
 
   await installShim(deps, steps, shim, join(packageDir, "launcher", "bin", checkout ? "pi-dev.js" : "pi.js"));
 
